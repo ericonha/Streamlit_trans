@@ -1,8 +1,8 @@
 import streamlit as st
 import os
 from datetime import datetime
-import git.Streamlit_trans.code.deepgram_process as deepgram_process
-import git.Streamlit_trans.code.openai_process as openai_process
+import deepgram_process as deepgram_process
+import openai_process as openai_process
 from multiprocessing import Pool, cpu_count
 
 # Available language options
