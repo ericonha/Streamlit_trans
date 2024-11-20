@@ -1,3 +1,4 @@
 streamlit
 gitpython
 deepgram-sdk
+openai
