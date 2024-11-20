@@ -2,11 +2,9 @@ import streamlit as st
 import os
 from datetime import datetime
 import deepgram_process
-import openai_process
-import io
 import re
+from fpdf import FPDF
 
-# Available language options
 LANGUAGES = {
     "English": "en",
     "German": "de",
@@ -14,104 +12,69 @@ LANGUAGES = {
     "Chinese": "zh"
 }
 
-acceptable_formats = [
-    "wav",
-    "mp3",
-    "mp4",
-    "mkv"
-]
-
-
 def format_transcript(raw_text):
-    """
-    Formats a transcript by consolidating timestamps, speaker labels, and their text onto a single line.
-    
-    Args:
-        raw_text (str): The raw transcript text.
-    
-    Returns:
-        str: The formatted transcript.
-    """
-    # Split the transcript into lines and initialize variables
     lines = raw_text.splitlines()
     formatted_lines = []
     current_line = ""
 
     for line in lines:
-        line = line.strip()  # Remove leading/trailing whitespace
-        
-        # Check if the line contains a timestamp
+        line = line.strip()
         if re.match(r"^\[\d{2}:\d{2}\]$", line):
-            # Append the current line to formatted_lines if it's not empty
             if current_line:
                 formatted_lines.append(current_line.strip())
                 formatted_lines.append("")
                 current_line = ""
-            current_line = line + " "  # Start a new line with the timestamp
-        
-        # Check if the line contains a speaker label
+            current_line = line + " "
         elif re.match(r"^Speaker \d+:$", line):
-            current_line += line + " "  # Add speaker label to the current line
-        
-        # Otherwise, it's part of the speech text
+            current_line += line + " "
         else:
             current_line += line + " "
 
-    # Add the last line being built, if any
     if current_line:
         formatted_lines.append(current_line.strip())
 
-    # Join all formatted lines with newlines
     return "\n".join(formatted_lines)
 
-# Streamlit app
+def generate_pdf(content, output_file):
+    pdf = FPDF()
+    pdf.set_auto_page_break(auto=True, margin=15)
+    pdf.add_page()
+    pdf.set_font("Arial", size=12)
+    for line in content.splitlines():
+        pdf.cell(0, 10, txt=line, ln=True)
+    pdf.output(output_file)
+    return output_file
+
 def main():
     st.title("Transcription Generator with Direct Download")
-    st.markdown("""
-    This application helps you generate transcriptions from your audio files.
-    Simply upload your file, select an output directory, and choose your preferred language.
-    Press the button to start the transcription process!
-    """)
+    st.markdown("Upload an audio file, select language, and generate a transcription.")
 
-    # File upload
-    st.subheader("Step 1: Upload Your Audio File")
-    uploaded_file = st.file_uploader("Choose an audio file (WAV, MP3, MP4, MKV)", type=["wav", "mp3", "mp4", "mkv"])
-    
+    uploaded_file = st.file_uploader("Choose an audio file", type=["wav", "mp3", "mp4", "mkv"])
     if uploaded_file:
         st.write(f"Uploaded file: {uploaded_file.name}")
 
-    # Language selection
-    st.subheader("Step 2: Select Transcription Language")
     language = st.selectbox("Select a language", list(LANGUAGES.keys()))
-
-    # Choose Output File Name
-    st.subheader("Step 3: Choose Output File Name")
     output_filename = st.text_input("Enter the name for your output file", value="transcription.txt")
 
-    # Start transcription button
     if st.button("Start Transcription"):
         if uploaded_file and output_filename:
             language_code = LANGUAGES[language]
             temp_file_path = os.path.join("/tmp", uploaded_file.name)
             transcription_text = ""
+
             with open(temp_file_path, "wb") as f:
                 f.write(uploaded_file.getbuffer())
             
             try:
                 start_time = datetime.now()
-
-                # Perform transcription
                 transcription_text = deepgram_process.voice_to_text_deepgram(
                     temp_file_path, 
                     "/tmp/" + output_filename, 
                     language_code
                 )
-                
-                # Ensure transcription_text is a string, not a list
                 if isinstance(transcription_text, list):
-                    transcription_text = "\n".join(transcription_text)  # Join list elements into a single string
+                    transcription_text = "\n".join(transcription_text)
 
-                # Record end time and display results
                 end_time = datetime.now()
                 duration = (end_time - start_time).total_seconds()
                 st.success(f"Transcription completed in {duration:.2f} seconds.")
@@ -119,13 +82,16 @@ def main():
 
                 formatted_transcription = format_transcript(transcription_text)  
 
-                # Provide download button for transcription text
-                st.download_button(
-                    label="Download Transcription",
-                    data=formatted_transcription,
-                    file_name=output_filename,
-                    mime="pdf"
-                )
+                pdf_file_path = "/tmp/transcription.pdf"
+                generate_pdf(formatted_transcription, pdf_file_path)
+
+                with open(pdf_file_path, "rb") as pdf_file:
+                    st.download_button(
+                        label="Download Transcription (PDF)",
+                        data=pdf_file,
+                        file_name="transcription.pdf",
+                        mime="application/pdf"
+                    )
 
             except Exception as e:
                 st.error(f"An error occurred: {e}")
