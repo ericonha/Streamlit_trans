@@ -93,7 +93,7 @@ def main():
         if uploaded_file and output_filename:
             language_code = LANGUAGES[language]
             temp_file_path = os.path.join("/tmp", uploaded_file.name)
-            transcription_text=[]
+            transcription_text = ""
             with open(temp_file_path, "wb") as f:
                 f.write(uploaded_file.getbuffer())
             
