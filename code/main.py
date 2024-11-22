@@ -49,6 +49,10 @@ def main():
     st.title("Transcription Generator with Direct Download")
     st.markdown("Upload an audio file, select language, and generate a transcription.")
 
+    # Initialize session state for transcription_text
+    if "transcription_text" not in st.session_state:
+        st.session_state.transcription_text = ""
+
     uploaded_file = st.file_uploader("Choose an audio file", type=["wav", "mp3", "mp4", "mkv"])
     if uploaded_file:
         st.write(f"Uploaded file: {uploaded_file.name}")
@@ -57,6 +61,7 @@ def main():
     output_filename = st.text_input("Enter the name for your output file", value="transcription.txt")
 
     if st.button("Start Transcription"):
+        st.session_state.transcription_text = ""
         if uploaded_file and output_filename:
             language_code = LANGUAGES[language]
             temp_file_path = os.path.join("/tmp", uploaded_file.name)
@@ -67,20 +72,20 @@ def main():
             
             try:
                 start_time = datetime.now()
-                transcription_text = deepgram_process.voice_to_text_deepgram(
+                st.session_state.transcription_text = deepgram_process.voice_to_text_deepgram(
                     temp_file_path, 
                     "/tmp/" + output_filename, 
                     language_code
                 )
                 if isinstance(transcription_text, list):
-                    transcription_text = "\n".join(transcription_text)
+                    transcription_text = "\n".join(st.session_state.transcription_text)
 
                 end_time = datetime.now()
                 duration = (end_time - start_time).total_seconds()
                 st.success(f"Transcription completed in {duration:.2f} seconds.")
                 st.write(f"Transcription ready for download as {output_filename}")
 
-                formatted_transcription = format_transcript(transcription_text)  
+                formatted_transcription = format_transcript(st.session_state.transcription_text)  
 
                 pdf_file_path = "/tmp/transcription.pdf"
                 generate_pdf(formatted_transcription, pdf_file_path)
