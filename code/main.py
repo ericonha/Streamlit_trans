@@ -68,7 +68,7 @@ def generate_pdf(content, output_file):
                 pdf.set_font("Arial", style="", size=12)  # Normal font
                 pdf.multi_cell(0, 10, txt=part, ln=False)
 
-        pdf.ln(5)  # Add some spacing between lines
+        pdf.multi_cell(0, 10, txt=line) 
 
     pdf.output(output_file)
     return output_file
