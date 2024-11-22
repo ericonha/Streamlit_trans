@@ -63,15 +63,16 @@ def generate_pdf(content, output_file):
         for part in parts:
             if part.startswith("[") and part.endswith("]"):  # Italicize content in square brackets
                 pdf.set_font("Arial", style="I", size=12)  # Italic font
-                pdf.multi_cell(0, 10, txt=part, ln=False)
             else:  # Render normal text for other parts
                 pdf.set_font("Arial", style="", size=12)  # Normal font
-                pdf.multi_cell(0, 10, txt=part, ln=False)
 
-        pdf.multi_cell(0, 10, txt=line) 
+            pdf.cell(0, 10, txt=part, ln=False)  # Render text inline
+
+        pdf.ln(10)  # Move to the next line after completing a line
 
     pdf.output(output_file)
     return output_file
+
 
 def main():
     st.title("Transcription Generator with Direct Download")
