@@ -4,14 +4,14 @@ import asyncio
 
 API_Key = "f8af803c1244c35763581248bd4a622819f7992b"
 
-transcript_final = []
-transcription_text = []
-
 
 def voice_to_text_deepgram(file_path_audio, output_file_text, language):
     try:
         # Initialize the Deepgram client
         deepgram = DeepgramClient(API_Key)
+
+        transcript_final = []
+        transcription_text = []
 
         # Set transcription options
         options = PrerecordedOptions(
