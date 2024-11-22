@@ -61,7 +61,7 @@ def generate_pdf(content, output_file):
             if line.startswith("[") and "]" in line:  # Italicize timestamps
                 pdf.set_font("Arial", style="I", size=12)  # Italic font
             else:  # Normal text for other lines
-                pdf.set_font("Arial", style="", size=12)  # Normal font
+                pdf.set_font("Arial", style="B", size=12)  # Normal font
     
             pdf.multi_cell(0, 10, txt=line)  # Add line with word wrapping
     
