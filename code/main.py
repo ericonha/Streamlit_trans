@@ -37,14 +37,14 @@ def format_transcript(raw_text):
 
 class StyledPDF(FPDF):
     def header(self):
-        # Add a title header
+        # Add a title header with a large bold font
         self.set_font("Arial", style="B", size=16)
         self.cell(0, 10, "Transcription Document", ln=True, align="C")
-        self.ln(10)  # Add some vertical space
+        self.ln(10)  # Add vertical spacing
 
     def footer(self):
-        # Add a page number in the footer
-        self.set_y(-15)
+        # Add a page number at the bottom
+        self.set_y(-15)  # Position 15mm from the bottom
         self.set_font("Arial", size=8)
         self.cell(0, 10, f"Page {self.page_no()}", align="C")
 
@@ -52,6 +52,8 @@ def generate_pdf(content, output_file):
     pdf = StyledPDF()
     pdf.set_auto_page_break(auto=True, margin=15)
     pdf.add_page()
+
+    # Set default font
     pdf.set_font("Arial", size=12)
 
     for line in content.splitlines():
@@ -66,6 +68,10 @@ def generate_pdf(content, output_file):
             pdf.set_text_color(0, 0, 0)  # Black for normal text
 
         pdf.multi_cell(0, 10, txt=line)  # Add line with word wrapping
+
+        # Reset font and color to default for normal text
+        pdf.set_font("Arial", size=12)
+        pdf.set_text_color(0, 0, 0)
 
     pdf.output(output_file)
     return output_file
