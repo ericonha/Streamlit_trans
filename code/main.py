@@ -35,13 +35,38 @@ def format_transcript(raw_text):
 
     return "\n".join(formatted_lines)
 
+class StyledPDF(FPDF):
+    def header(self):
+        # Add a title header
+        self.set_font("Arial", style="B", size=16)
+        self.cell(0, 10, "Transcription Document", ln=True, align="C")
+        self.ln(10)  # Add some vertical space
+
+    def footer(self):
+        # Add a page number in the footer
+        self.set_y(-15)
+        self.set_font("Arial", size=8)
+        self.cell(0, 10, f"Page {self.page_no()}", align="C")
+
 def generate_pdf(content, output_file):
-    pdf = FPDF()
+    pdf = StyledPDF()
     pdf.set_auto_page_break(auto=True, margin=15)
     pdf.add_page()
     pdf.set_font("Arial", size=12)
+
     for line in content.splitlines():
-        pdf.cell(0, 10, txt=line, ln=True)
+        if line.startswith("[") and "]" in line:  # Highlight timestamps
+            pdf.set_font("Arial", style="I", size=10)
+            pdf.set_text_color(0, 102, 204)  # Blue for timestamps
+        elif "Speaker" in line:  # Highlight speaker labels
+            pdf.set_font("Arial", style="B", size=12)
+            pdf.set_text_color(51, 153, 51)  # Green for speakers
+        else:
+            pdf.set_font("Arial", size=12)
+            pdf.set_text_color(0, 0, 0)  # Black for normal text
+
+        pdf.multi_cell(0, 10, txt=line)  # Add line with word wrapping
+
     pdf.output(output_file)
     return output_file
 
