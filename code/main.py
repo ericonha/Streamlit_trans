@@ -60,30 +60,15 @@ def generate_pdf(content, output_file):
     pdf.set_text_color(0, 0, 0)  # Black for all text
 
     for line in content.splitlines():
-        # Find the position of the second colon
-        first_colon = line.find(':')
-        second_colon = line.find(':', first_colon + 1)
+        if line.startswith("[") and "]" in line:  # Italicize timestamps
+            pdf.set_font("Arial", style="I", size=12)  # Italic font
+        else:  # Normal text for other lines
+            pdf.set_font("Arial", style="", size=12)  # Normal font
 
-        if second_colon != -1:
-            # Split the line at the second colon
-            part_italic = line[:second_colon + 1]  # Text up to and including second colon
-            part_normal = line[second_colon + 1:]  # Rest of the line
-
-            # Apply italic to the first part (up to the second colon)
-            pdf.set_font("Arial", style="I", size=12)
-            pdf.cell(0, 10, txt=part_italic, ln=False)
-
-            # Apply normal style to the remaining part
-            pdf.set_font("Arial", style="", size=12)
-            pdf.cell(0, 10, txt=part_normal, ln=True)
-        else:
-            # If there is no second colon, treat the entire line as normal
-            pdf.set_font("Arial", style="", size=12)
-            pdf.cell(0, 10, txt=line, ln=True)
+        pdf.multi_cell(0, 10, txt=line)  # Add line with word wrapping
 
     pdf.output(output_file)
     return output_file
-
 
 def main():
     st.title("Transcription Generator with Direct Download")
