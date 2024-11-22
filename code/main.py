@@ -48,6 +48,8 @@ class StyledPDF(FPDF):
         self.set_font("Arial", size=8)
         self.cell(0, 10, f"Page {self.page_no()}", align="C")
 
+import re
+
 def generate_pdf(content, output_file):
     pdf = StyledPDF()
     pdf.set_auto_page_break(auto=True, margin=15)
@@ -58,29 +60,30 @@ def generate_pdf(content, output_file):
     pdf.set_text_color(0, 0, 0)  # Black for all text
 
     for line in content.splitlines():
-        # Find the position of the first colon
-        colon_pos = line.find(":")
+        # Find the position of the second colon
+        first_colon = line.find(':')
+        second_colon = line.find(':', first_colon + 1)
 
-        if colon_pos != -1:  # If a colon exists
-            italic_part = line[:colon_pos+1]  # Get the part before the colon
-            normal_part = line[colon_pos+1:]  # Get the part after the colon
+        if second_colon != -1:
+            # Split the line at the second colon
+            part_italic = line[:second_colon + 1]  # Text up to and including second colon
+            part_normal = line[second_colon + 1:]  # Rest of the line
 
-            # Italicize the part before the colon
+            # Apply italic to the first part (up to the second colon)
             pdf.set_font("Arial", style="I", size=12)
-            pdf.multi_cell(0, 10, txt=italic_part)  # Add italicized part
+            pdf.cell(0, 10, txt=part_italic, ln=False)
 
-            # Set normal font for the rest of the line
+            # Apply normal style to the remaining part
             pdf.set_font("Arial", style="", size=12)
-            pdf.multi_cell(0, 10, txt=normal_part)  # Add normal part
+            pdf.cell(0, 10, txt=part_normal, ln=True)
         else:
-            # If no colon, render the entire line in normal style
+            # If there is no second colon, treat the entire line as normal
             pdf.set_font("Arial", style="", size=12)
-            pdf.multi_cell(0, 10, txt=line)
-
-        pdf.ln(5)  # Add some space between lines
+            pdf.cell(0, 10, txt=line, ln=True)
 
     pdf.output(output_file)
     return output_file
+
 
 def main():
     st.title("Transcription Generator with Direct Download")
