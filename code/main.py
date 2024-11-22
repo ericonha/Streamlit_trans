@@ -53,18 +53,23 @@ def generate_pdf(content, output_file):
     pdf.set_auto_page_break(auto=True, margin=15)
     pdf.add_page()
 
-    # Set default font
+    # Default font style
     pdf.set_font("Arial", size=12)
     pdf.set_text_color(0, 0, 0)  # Black for all text
 
     for line in content.splitlines():
-            if line.startswith("[") and "]" in line:  # Italicize timestamps
+        # Split line into parts based on square brackets
+        parts = re.split(r"(\[.*?\])", line)
+        for part in parts:
+            if part.startswith("[") and part.endswith("]"):  # Italicize content in square brackets
                 pdf.set_font("Arial", style="I", size=12)  # Italic font
-            else:  # Normal text for other lines
-                pdf.set_font("Arial", style="B", size=12)  # Normal font
-    
-            pdf.multi_cell(0, 10, txt=line)  # Add line with word wrapping
-    
+                pdf.multi_cell(0, 10, txt=part, ln=False)
+            else:  # Render normal text for other parts
+                pdf.set_font("Arial", style="", size=12)  # Normal font
+                pdf.multi_cell(0, 10, txt=part, ln=False)
+
+        pdf.ln(5)  # Add some spacing between lines
+
     pdf.output(output_file)
     return output_file
 
