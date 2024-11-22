@@ -48,7 +48,7 @@ def generate_pdf(content, output_file):
 def main():
     st.title("Transcription Generator with Direct Download")
     st.markdown("Upload an audio file, select language, and generate a transcription.")
-
+    transcription_result = ""
     # Initialize session state for transcription_text
     if "transcription_text" not in st.session_state:
         st.session_state.transcription_text = ""
@@ -72,13 +72,16 @@ def main():
             
             try:
                 start_time = datetime.now()
-                st.session_state.transcription_text = deepgram_process.voice_to_text_deepgram(
+                transcription_text = deepgram_process.voice_to_text_deepgram(
                     temp_file_path, 
                     "/tmp/" + output_filename, 
                     language_code
                 )
-                if isinstance(transcription_text, list):
-                    transcription_text = "\n".join(st.session_state.transcription_text)
+                # Convert list to string if necessary
+                if isinstance(transcription_result, list):
+                    st.session_state.transcription_text = "\n".join(transcription_result)
+                else:
+                    st.session_state.transcription_text = transcription_result
 
                 end_time = datetime.now()
                 duration = (end_time - start_time).total_seconds()
