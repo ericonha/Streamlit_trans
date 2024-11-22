@@ -36,6 +36,10 @@ def format_transcript(raw_text):
     return "\n".join(formatted_lines)
 
 class StyledPDF(FPDF):
+    def __init__(self, title):
+        super().__init__()
+        self.title = title
+        
     def header(self):
         # Add a title header with a large bold font
         self.set_font("Arial", style="B", size=16)
@@ -48,8 +52,8 @@ class StyledPDF(FPDF):
         self.set_font("Arial", size=8)
         self.cell(0, 10, f"Page {self.page_no()}", align="C")
 
-def generate_pdf(content, output_file):
-    pdf = StyledPDF()
+def generate_pdf(content, output_file, file_title):
+    pdf = StyledPDF(file_title)  # Pass the title when creating the PDF instance
     pdf.set_auto_page_break(auto=True, margin=15)
     pdf.add_page()
 
@@ -81,8 +85,6 @@ def generate_pdf(content, output_file):
 
     pdf.output(output_file)
     return output_file
-
-
 
 def main():
     st.title("Transcription Generator with Direct Download")
@@ -123,7 +125,7 @@ def main():
                 formatted_transcription = format_transcript(transcription_text)  
 
                 pdf_file_path = "/tmp/transcription.pdf"
-                generate_pdf(formatted_transcription, pdf_file_path)
+                generate_pdf(formatted_transcription, pdf_file_path, uploaded_file.name)
 
                 with open(pdf_file_path, "rb") as pdf_file:
                     st.download_button(
