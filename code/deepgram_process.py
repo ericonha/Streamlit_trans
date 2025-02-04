@@ -36,7 +36,6 @@ def voice_to_text_deepgram(file_path_audio, output_file_text, language):
         current_speaker = None
 
         for result in response['results']['channels'][0]['alternatives']:
-            transcription_text.append("Transcript:\n")
             for word in result['words']:
                 speaker = word['speaker']
                 start_time = word['start']
