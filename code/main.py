@@ -36,17 +36,11 @@ def format_transcript(raw_text):
     return "\n".join(formatted_lines)
 
 class StyledPDF(FPDF):        
-    def header(self):
-        # Add a title header with a large bold font
-        self.set_font("Arial", style="B", size=16)
-        self.cell(0, 10, "Transcription Document", ln=True, align="C")
-        self.ln(10)  # Add vertical spacing
 
     def footer(self):
         # Add a page number at the bottom
         self.set_y(-15)  # Position 15mm from the bottom
         self.set_font("Arial", size=8)
-        self.cell(0, 10, f"Page {self.page_no()}", align="C")
 
 import re
 
