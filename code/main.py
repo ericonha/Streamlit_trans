@@ -6,8 +6,8 @@ import re
 from fpdf import FPDF
 
 LANGUAGES = {
-    "English": "en",
     "German": "de",
+    "English": "en",
     "Portuguese": "pt-Br",
     "Chinese": "zh"
 }
