@@ -5,6 +5,8 @@ import deepgram_process
 import re
 from fpdf import FPDF
 
+st.set_option('server.maxUploadSize', 600)  # 600 MB limit
+
 LANGUAGES = {
     "German": "de",
     "English": "en",
