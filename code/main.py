@@ -75,14 +75,19 @@ def main():
         if uploaded_file:
             language_code = LANGUAGES[language]
 
-            # Extrai nome base do arquivo sem extensão
             base_name = os.path.splitext(uploaded_file.name)[0]
-            print(base_name)
             output_pdf_name = f"{base_name}_transcript.pdf"
 
-            with tempfile.NamedTemporaryFile(delete=False, suffix=os.path.splitext(uploaded_file.name)[1]) as temp_audio_file:
-                temp_audio_file.write(uploaded_file.getbuffer())
-                temp_audio_path = temp_audio_file.name
+            # Criar arquivo temporário para áudio com mkstemp
+            fd_audio, temp_audio_path = tempfile.mkstemp(suffix=os.path.splitext(uploaded_file.name)[1])
+            os.close(fd_audio)  # Fecha o descritor para liberar
+
+            with open(temp_audio_path, "wb") as f:
+                f.write(uploaded_file.getbuffer())
+
+            # Criar arquivo temporário para PDF com mkstemp
+            fd_pdf, pdf_path = tempfile.mkstemp(suffix=".pdf")
+            os.close(fd_pdf)
 
             try:
                 start_time = datetime.now()
@@ -99,9 +104,6 @@ def main():
                 st.success(f"Transcription completed in {duration:.2f} seconds.")
 
                 formatted_transcription = format_transcript(transcription_text)
-
-                with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf") as temp_pdf_file:
-                    pdf_path = temp_pdf_file.name
 
                 generate_pdf(formatted_transcription, pdf_path)
 
