@@ -36,13 +36,11 @@ def format_transcript(raw_text):
     return "\n".join(formatted_lines)
 
 class StyledPDF(FPDF):        
-
     def footer(self):
         # Add a page number at the bottom
         self.set_y(-15)  # Position 15mm from the bottom
         self.set_font("Arial", size=8)
-
-import re
+        self.cell(0, 10, f"Page {self.page_no()}", 0, 0, "C")
 
 def generate_pdf(content, output_file):
     pdf = StyledPDF()
@@ -71,58 +69,51 @@ def main():
     uploaded_file = st.file_uploader("Choose an audio file", type=["wav", "mp3", "mp4", "mkv"])
     language = st.selectbox("Select a language", list(LANGUAGES.keys()))
 
-    if st.button("Start Transcription"):
-        if uploaded_file:
-            language_code = LANGUAGES[language]
+    if uploaded_file:
+        st.write(f"Uploaded file: {uploaded_file.name}")
 
-            base_name = os.path.splitext(uploaded_file.name)[0]
-            output_pdf_name = f"{base_name}_transcript.pdf"
+        base_name = os.path.splitext(uploaded_file.name)[0]
+        output_pdf_name = f"{base_name}_transcript.pdf"
+        output_pdf_path = os.path.join("/tmp", output_pdf_name)
+        temp_file_path = os.path.join("/tmp", uploaded_file.name)
 
-            # Criar arquivo temporário para áudio com mkstemp
-            fd_audio, temp_audio_path = tempfile.mkstemp(suffix=os.path.splitext(uploaded_file.name)[1])
-            os.close(fd_audio)  # Fecha o descritor para liberar
-
-            with open(temp_audio_path, "wb") as f:
-                f.write(uploaded_file.getbuffer())
-
-            # Criar arquivo temporário para PDF com mkstemp
-            fd_pdf, pdf_path = tempfile.mkstemp(suffix=".pdf")
-            os.close(fd_pdf)
-
+        if st.button("Start Transcription"):
             try:
+                language_code = LANGUAGES[language]
+
+                # Save uploaded audio file temporarily
+                with open(temp_file_path, "wb") as f:
+                    f.write(uploaded_file.getbuffer())
+
                 start_time = datetime.now()
                 transcription_text = deepgram_process.voice_to_text_deepgram(
-                    temp_audio_path,
-                    None,
+                    temp_file_path,
+                    output_pdf_path,
                     language_code
                 )
+
                 if isinstance(transcription_text, list):
                     transcription_text = "\n".join(transcription_text)
 
                 end_time = datetime.now()
                 duration = (end_time - start_time).total_seconds()
                 st.success(f"Transcription completed in {duration:.2f} seconds.")
+                st.write(f"Transcription ready for download as {output_pdf_name}")
 
                 formatted_transcription = format_transcript(transcription_text)
+                generate_pdf(formatted_transcription, output_pdf_path)
 
-                generate_pdf(formatted_transcription, pdf_path)
-
-                with open(pdf_path, "rb") as pdf_file:
+                with open(output_pdf_path, "rb") as pdf_file:
                     st.download_button(
-                        label=f"Download Transcription PDF ({output_pdf_name})",
+                        label="Download Transcription (PDF)",
                         data=pdf_file,
                         file_name=output_pdf_name,
                         mime="application/pdf"
                     )
             except Exception as e:
                 st.error(f"An error occurred: {e}")
-            finally:
-                if os.path.exists(temp_audio_path):
-                    os.remove(temp_audio_path)
-                if os.path.exists(pdf_path):
-                    os.remove(pdf_path)
-        else:
-            st.warning("Please upload an audio file.")
+    else:
+        st.warning("Please upload an audio file before starting transcription.")
 
 if __name__ == "__main__":
     main()
