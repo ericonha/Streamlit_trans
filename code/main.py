@@ -67,28 +67,27 @@ def generate_pdf(content, output_file):
 def main():
     st.title("Transcription Generator with Direct Download")
     st.markdown("Upload an audio file, select language, and generate a transcription.")
-    transcription_text = ""
-    uploaded_file = st.file_uploader("Choose an audio file", type=["wav", "mp3", "mp4", "mkv"])
-    if uploaded_file:
-        st.write(f"Uploaded file: {uploaded_file.name}")
 
+    uploaded_file = st.file_uploader("Choose an audio file", type=["wav", "mp3", "mp4", "mkv"])
     language = st.selectbox("Select a language", list(LANGUAGES.keys()))
-    output_filename = st.text_input("Enter the name for your output file", value="transcription.txt")
 
     if st.button("Start Transcription"):
-        if uploaded_file and output_filename:
+        if uploaded_file:
             language_code = LANGUAGES[language]
-            temp_file_path = os.path.join("/tmp", uploaded_file.name)
-            transcription_text = ""
 
-            with open(temp_file_path, "wb") as f:
-                f.write(uploaded_file.getbuffer())
-            
+            # Extrai nome base do arquivo sem extensão
+            base_name = os.path.splitext(uploaded_file.name)[0]
+            output_pdf_name = f"{base_name}_transcript.pdf"
+
+            with tempfile.NamedTemporaryFile(delete=False, suffix=os.path.splitext(uploaded_file.name)[1]) as temp_audio_file:
+                temp_audio_file.write(uploaded_file.getbuffer())
+                temp_audio_path = temp_audio_file.name
+
             try:
                 start_time = datetime.now()
                 transcription_text = deepgram_process.voice_to_text_deepgram(
-                    temp_file_path, 
-                    "/tmp/" + output_filename, 
+                    temp_audio_path,
+                    None,
                     language_code
                 )
                 if isinstance(transcription_text, list):
@@ -97,26 +96,30 @@ def main():
                 end_time = datetime.now()
                 duration = (end_time - start_time).total_seconds()
                 st.success(f"Transcription completed in {duration:.2f} seconds.")
-                st.write(f"Transcription ready for download as {output_filename}")
 
-                formatted_transcription = ""
-                formatted_transcription = format_transcript(transcription_text)  
+                formatted_transcription = format_transcript(transcription_text)
 
-                pdf_file_path = "/tmp/transcription.pdf"
-                generate_pdf(formatted_transcription, pdf_file_path)
+                with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf") as temp_pdf_file:
+                    pdf_path = temp_pdf_file.name
 
-                with open(pdf_file_path, "rb") as pdf_file:
+                generate_pdf(formatted_transcription, pdf_path)
+
+                with open(pdf_path, "rb") as pdf_file:
                     st.download_button(
-                        label="Download Transcription (PDF)",
+                        label=f"Download Transcription PDF ({output_pdf_name})",
                         data=pdf_file,
-                        file_name="transcription.pdf",
+                        file_name=output_pdf_name,
                         mime="application/pdf"
                     )
-
             except Exception as e:
                 st.error(f"An error occurred: {e}")
+            finally:
+                if os.path.exists(temp_audio_path):
+                    os.remove(temp_audio_path)
+                if os.path.exists(pdf_path):
+                    os.remove(pdf_path)
         else:
-            st.warning("Ensure you upload a file and provide a file name.")
+            st.warning("Please upload an audio file.")
 
 if __name__ == "__main__":
     main()
