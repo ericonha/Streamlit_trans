@@ -77,6 +77,7 @@ def main():
 
             # Extrai nome base do arquivo sem extensão
             base_name = os.path.splitext(uploaded_file.name)[0]
+            print(base_name)
             output_pdf_name = f"{base_name}_transcript.pdf"
 
             with tempfile.NamedTemporaryFile(delete=False, suffix=os.path.splitext(uploaded_file.name)[1]) as temp_audio_file:
